@@ -1,0 +1,536 @@
+
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const RegistrationApp());
+}
+
+class RegistrationApp extends StatelessWidget {
+  const RegistrationApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Registration Form',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFF5F3FA),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.black12),
+          ),
+        ),
+      ),
+      home: const RegistrationScreen(),
+    );
+  }
+}
+
+class RegistrationScreen extends StatefulWidget {
+  const RegistrationScreen({super.key});
+
+  @override
+  State<RegistrationScreen> createState() =>
+      _RegistrationScreenState();
+}
+
+class _RegistrationScreenState extends State<RegistrationScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _ageController = TextEditingController();
+  final _dobController = TextEditingController();
+
+  String? _gender;
+  DateTime? _dateOfBirth;
+  bool _hidePassword = true;
+  bool _hideConfirmPassword = true;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _phoneController.dispose();
+    _ageController.dispose();
+    _dobController.dispose();
+    super.dispose();
+  }
+
+  String? validateName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter your name';
+    }
+    if (value.trim().length < 3) {
+      return 'Name must contain at least 3 characters';
+    }
+    return null;
+  }
+
+  String? validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter your email';
+    }
+    if (!RegExp(
+      r'^[\w.!#$%&’*+/=?^_`{|}~-]+@[\w-]+(\.[\w-]+)+$',
+    ).hasMatch(value.trim())) {
+      return 'Enter a valid email address';
+    }
+    return null;
+  }
+
+  String? validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a password';
+    }
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+    return null;
+  }
+
+  String? validateConfirmPassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please confirm your password';
+    }
+    if (value != _passwordController.text) {
+      return 'Passwords do not match';
+    }
+    return null;
+  }
+
+  String? validatePhone(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter your phone number';
+    }
+    if (!RegExp(r'^\d{10,}$').hasMatch(value.trim())) {
+      return 'Enter at least 10 digits (numbers only)';
+    }
+    return null;
+  }
+
+  String? validateAge(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter your age';
+    }
+
+    final age = int.tryParse(value.trim());
+
+    if (age == null || age < 1 || age > 120) {
+      return 'Age must be between 1 and 120';
+    }
+
+    return null;
+  }
+
+  Future<void> _selectDate() async {
+    final now = DateTime.now();
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dateOfBirth ?? DateTime(
+        now.year - 18,
+        now.month,
+        now.day,
+      ),
+      firstDate: DateTime(1900),
+      lastDate: now,
+      helpText: 'Select your date of birth',
+    );
+
+    if (picked != null && mounted) {
+      setState(() {
+        _dateOfBirth = picked;
+        _dobController.text =
+            '${picked.day.toString().padLeft(2, '0')}/'
+            '${picked.month.toString().padLeft(2, '0')}/'
+            '${picked.year}';
+      });
+    }
+  }
+
+  String? validateDOB(String? value) {
+    if (_dateOfBirth == null) {
+      return 'Please select your date of birth';
+    }
+    if (_dateOfBirth!.isAfter(DateTime.now())) {
+      return 'Date of birth cannot be in the future';
+    }
+    return null;
+  }
+
+  void _submitForm() {
+    FocusScope.of(context).unfocus();
+
+    if (_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registration Successful!'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _resetForm() {
+    _formKey.currentState?.reset();
+
+    _nameController.clear();
+    _emailController.clear();
+    _passwordController.clear();
+    _confirmPasswordController.clear();
+    _phoneController.clear();
+    _ageController.clear();
+    _dobController.clear();
+
+    setState(() {
+      _gender = null;
+      _dateOfBirth = null;
+      _hidePassword = true;
+      _hideConfirmPassword = true;
+    });
+
+    FocusScope.of(context).unfocus();
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+  }
+
+  Widget _sectionTitle(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16, top: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.deepPurple),
+          const SizedBox(width: 10),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.bold,
+              color: Colors.deepPurple,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _fieldLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _textField({
+    required String label,
+    required String hint,
+    required IconData icon,
+    required TextEditingController controller,
+    required String? Function(String?) validator,
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+    Widget? suffixIcon,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _fieldLabel(label),
+          TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            obscureText: obscureText,
+            validator: validator,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            decoration: InputDecoration(
+              hintText: hint,
+              prefixIcon: Icon(icon),
+              suffixIcon: suffixIcon,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Create Account',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Card(
+                elevation: 3,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Icon(
+                          Icons.account_circle,
+                          size: 70,
+                          color: Colors.deepPurple,
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Registration Form',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Please fill in your details below',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 28),
+
+                        _sectionTitle(
+                          'Personal Information',
+                          Icons.person_outline,
+                        ),
+
+                        _textField(
+                          label: 'Full Name',
+                          hint: 'Enter your full name',
+                          icon: Icons.person,
+                          controller: _nameController,
+                          validator: validateName,
+                        ),
+
+                        _textField(
+                          label: 'Email Address',
+                          hint: 'example@email.com',
+                          icon: Icons.email_outlined,
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: validateEmail,
+                        ),
+
+                        _textField(
+                          label: 'Phone Number',
+                          hint: 'Enter at least 10 digits',
+                          icon: Icons.phone_outlined,
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          validator: validatePhone,
+                        ),
+
+                        _textField(
+                          label: 'Age',
+                          hint: 'Enter your age',
+                          icon: Icons.calendar_today_outlined,
+                          controller: _ageController,
+                          keyboardType: TextInputType.number,
+                          validator: validateAge,
+                        ),
+
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _fieldLabel('Gender'),
+                              DropdownButtonFormField<String>(
+                                value: _gender,
+                                decoration: const InputDecoration(
+                                  hintText: 'Select your gender',
+                                  prefixIcon: Icon(Icons.people_outline),
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'Male',
+                                    child: Text('Male'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Female',
+                                    child: Text('Female'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Other',
+                                    child: Text('Other'),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    _gender = value;
+                                  });
+                                },
+                                validator: (value) =>
+                                    value == null
+                                        ? 'Please select your gender'
+                                        : null,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _fieldLabel('Date of Birth'),
+                              TextFormField(
+                                controller: _dobController,
+                                readOnly: true,
+                                validator: validateDOB,
+                                autovalidateMode:
+                                    AutovalidateMode.onUserInteraction,
+                                onTap: _selectDate,
+                                decoration: const InputDecoration(
+                                  hintText: 'Select date of birth',
+                                  prefixIcon: Icon(Icons.event),
+                                  suffixIcon: Icon(
+                                    Icons.calendar_month,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        _sectionTitle(
+                          'Security Information',
+                          Icons.lock_outline,
+                        ),
+
+                        _textField(
+                          label: 'Password',
+                          hint: 'Minimum 6 characters',
+                          icon: Icons.lock_outline,
+                          controller: _passwordController,
+                          validator: validatePassword,
+                          obscureText: _hidePassword,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _hidePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _hidePassword = !_hidePassword;
+                              });
+                            },
+                          ),
+                        ),
+
+                        _textField(
+                          label: 'Confirm Password',
+                          hint: 'Re-enter your password',
+                          icon: Icons.lock_reset,
+                          controller: _confirmPasswordController,
+                          validator: validateConfirmPassword,
+                          obscureText: _hideConfirmPassword,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _hideConfirmPassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _hideConfirmPassword =
+                                    !_hideConfirmPassword;
+                              });
+                            },
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        SizedBox(
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed: _submitForm,
+                            icon: const Icon(Icons.person_add),
+                            label: const Text(
+                              'Register',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        SizedBox(
+                          height: 50,
+                          child: OutlinedButton.icon(
+                            onPressed: _resetForm,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Reset Form'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.deepPurple,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
